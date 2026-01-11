@@ -3,8 +3,10 @@ REST API Module - Forensic Chain
 Provides API endpoints for interacting with the system via HTTP.
 """
 from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
 import os
 import sys
+import hashlib
 
 # Add src directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -13,6 +15,7 @@ from src.smart_contract import ForensicContract
 from src.evidence_store import EvidenceStore
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 contract = ForensicContract()
 evidence_store = EvidenceStore()
 
