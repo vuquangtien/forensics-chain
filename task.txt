@@ -1,0 +1,66 @@
+Dựa trên tài liệu được cung cấp, hệ thống Forensic-Chain (Chuỗi hành trình chứng cứ số dựa trên Blockchain) được xây dựng chủ yếu dựa trên nền tảng Hyperledger Composer và Hyperledger Fabric.
+Dưới đây là tóm tắt chi tiết các bước và thành phần cần thiết để xây dựng lại hệ thống này theo mô hình đã đề xuất:
+1. Kiến trúc tổng thể của hệ thống
+Hệ thống được thiết kế với 5 thành phần chính tương tác với nhau để đảm bảo tính toàn vẹn và khả năng truy vết của bằng chứng
+:
+1. Người tham gia (Participants): Các tác nhân trong mạng lưới (Điều tra viên, Công tố viên, Tòa án...).
+2. Giao diện người dùng (Front-End): Nơi người dùng tương tác với hệ thống.
+3. Các mô-đun cốt lõi (Core Modules): Xử lý giao tiếp với mạng Blockchain.
+4. Mạng Blockchain (Blockchain Network): Mạng ngang hàng (P2P) và cơ chế đồng thuận.
+5. Kho lưu trữ phân tán (Distributed Evidence Store): Nơi lưu trữ an toàn các tệp bằng chứng gốc.
+2. Quy trình xây dựng trên nền tảng Hyperledger Composer
+Hyperledger Composer được sử dụng để giảm thiểu thời gian phát triển từ hàng tháng xuống còn hàng tuần nhờ vào bộ công cụ mở
+. Quy trình xây dựng cụ thể như sau:
+Bước 1: Định nghĩa Mạng lưới Kinh doanh (Business Network Definition)
+Bạn cần tạo các tệp mô hình để định nghĩa cấu trúc dữ liệu của hệ thống
+,
+:
+• Tài sản (Assets): Trong trường hợp này là "Bằng chứng số" (Digital Evidence). Dữ liệu này bao gồm ID bằng chứng (được tạo từ mã băm SHA256), người tạo, chủ sở hữu hiện tại, mô tả và lịch sử chuyển giao
+,
+.
+• Người tham gia (Participants): Định nghĩa các vai trò như Điều tra viên pháp y, Thẩm phán, v.v. Các tác nhân này được định danh và lưu trong sổ đăng ký
+.
+• Quyền truy cập (Access Control): Sử dụng tệp permissions.acl để xác định ai có quyền thực hiện hành động gì. Ví dụ: chỉ những người tham gia được ủy quyền mới được sửa đổi trạng thái hoặc xem chi tiết bằng chứng
+,
+.
+Bước 2: Viết Smart Contract (Hợp đồng thông minh)
+Logic của hệ thống được viết bằng ngôn ngữ JavaScript để xử lý các giao dịch
+. Có 4 thuật toán/chức năng chính cần lập trình
+:
+1. Tạo bằng chứng (Evidence Creation): Nhận đầu vào là ID và mô tả. Hệ thống sẽ kiểm tra xem ID đã tồn tại chưa, nếu chưa sẽ ghi nhận người tạo là chủ sở hữu đầu tiên và lưu thời gian tạo
+.
+2. Chuyển giao bằng chứng (Evidence Transfer): Chuyển quyền sở hữu từ người này sang người khác. Hệ thống kiểm tra quyền sở hữu hiện tại, sau đó cập nhật chủ sở hữu mới và ghi lại thời gian chuyển giao vào chuỗi lịch sử để phục vụ kiểm toán
+.
+3. Xóa bằng chứng (Evidence Deletion): Chức năng này loại bỏ mục nhập bằng chứng khỏi sổ đăng ký (asset registry) khi nó không còn liên quan đến vụ án. Lưu ý: Không ai có thể xóa hoàn toàn dấu vết lịch sử trên Blockchain, đây chỉ là đánh dấu bằng chứng không còn hiệu lực trong danh sách hiện hành
+.
+4. Hiển thị bằng chứng (Evidence Display): Truy xuất và trả về thông tin bằng chứng từ Blockchain
+.
+Bước 3: Đóng gói và Triển khai (Deploy)
+• Các tệp định nghĩa (Model), logic (Script), và quyền truy cập (Access Control) được đóng gói thành một tệp lưu trữ mạng doanh nghiệp (.bna)
+.
+• Tệp .bna này sau đó được triển khai lên hạ tầng Hyperledger Fabric (có thể chạy cục bộ hoặc trên cloud)
+. Hyperledger Fabric cung cấp lớp mạng ngang hàng và giao thức đồng thuận bên dưới,
+.
+Bước 4: Xây dựng Giao diện (Front-End) và Tích hợp
+Để người dùng (không chuyên về kỹ thuật blockchain) có thể sử dụng hệ thống, cần xây dựng ứng dụng phía người dùng
+:
+• Sử dụng composer-rest-server (dựa trên công nghệ Loopback) để tự động tạo ra các REST API từ mạng lưới kinh doanh đã định nghĩa
+,
+.
+• Sử dụng Yeoman framework để tạo khung ứng dụng web (ví dụ: Angular application) kết nối với các API trên
+,
+.
+3. Cơ chế lưu trữ dữ liệu (Quan trọng)
+Cần lưu ý rằng bằng chứng số gốc không được lưu trực tiếp trên Blockchain vì vấn đề kích thước và hiệu năng.
+• Dữ liệu trên Blockchain: Chỉ lưu trữ siêu dữ liệu (metadata), mã băm (hash) của bằng chứng, thông tin chủ sở hữu và lịch sử chuyển giao
+.
+• Dữ liệu gốc: Được lưu tại Distributed Evidence Store (Kho lưu trữ bằng chứng phân tán) có cơ chế xác thực và ủy quyền riêng. Khi cần kiểm tra, hệ thống sẽ so sánh mã băm của tệp trong kho với mã băm được ghi bất biến trên Blockchain
+.
+Tóm lại
+Để xây lại hệ thống này, bạn cần thiết lập môi trường Hyperledger Composer, định nghĩa các file mô hình .cto (cho bằng chứng và người dùng), viết logic xử lý bằng .js (cho việc tạo, chuyển, xóa bằng chứng), cấu hình quyền truy cập .acl, sau đó triển khai lên Hyperledger Fabric và tạo giao diện web thông qua REST API.
+
+--------------------------------------------------------------------------------
+Góc nhìn so sánh: Hãy tưởng tượng hệ thống này giống như một thư viện đặc biệt (Blockchain) quản lý một kho báu bị khóa kín (Kho lưu trữ bằng chứng).
+• Bạn không thể để cả kho báu vào trong cuốn sổ danh mục của thư viện (Blockchain) vì nó quá lớn.
+• Thay vào đó, bạn chỉ ghi vào sổ danh mục một "dấu triện" (mã Hash) chứng minh sự tồn tại và vị trí của kho báu.
+• Mỗi khi kho báu được chuyển tay từ người này sang người khác, thủ thư (Smart Contract) sẽ ghi lại chính xác giờ giấc và người nhận vào cuốn sổ danh mục đó. Cuốn sổ này được làm bằng chất liệu không thể tẩy xóa, đảm bảo không ai có thể chối bỏ trách nhiệm hoặc làm giả lịch sử sở hữu.

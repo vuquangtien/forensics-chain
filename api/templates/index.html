@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forensic-Chain | Digital Forensics Chain of Custody</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Current User Panel -->
+    <div id="user-panel" class="user-panel">
+        <div class="user-info">
+            <span id="current-user-name">Not logged in</span>
+            <span id="current-user-role" class="badge">No role</span>
+        </div>
+        <button class="btn-small" onclick="showLoginModal()">Switch User</button>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Select Current User</h2>
+                <button class="modal-close" onclick="closeLoginModal()">×</button>
+            </div>
+            <div style="padding: 20px;">
+                <div class="form-group">
+                    <label for="current-user-select">Select your Participant ID</label>
+                    <select id="current-user-select" class="form-control">
+                        <option value="">Select participant...</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="loginAsUser()">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>FORENSIC-CHAIN</h1>
+            <p>Blockchain-Based Digital Forensics Chain of Custody Management System</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-tab="dashboard">Dashboard</button>
+            <button class="nav-tab" data-tab="participants">Participants</button>
+            <button class="nav-tab" data-tab="evidence">Evidence</button>
+            <button class="nav-tab" data-tab="transfer">Transfer</button>
+            <button class="nav-tab" data-tab="delete">Delete</button>
+            <button class="nav-tab" data-tab="blockchain">Blockchain</button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="number" id="stat-participants">0</div>
+                    <div class="label">Participants</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="stat-evidence">0</div>
+                    <div class="label">Evidence Items</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="stat-blocks">0</div>
+                    <div class="label">Blockchain Blocks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="number" id="stat-valid">-</div>
+                    <div class="label">Chain Valid</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>System Overview</h2>
+                </div>
+                <p style="color: #6b7280; line-height: 1.8; font-size: 1.05rem;">
+                    Welcome to the Forensic-Chain management interface. This system provides a secure, 
+                    tamper-proof chain of custody for digital evidence using blockchain technology.
+                </p>
+                <div style="margin-top: 20px; padding: 20px; background: #f3f4f6; border-radius: 8px;">
+                    <h3 style="margin-bottom: 15px; color: #1f2937;">Quick Start Guide:</h3>
+                    <ol style="color: #4b5563; line-height: 2;">
+                        <li><strong>Register Participants:</strong> Add investigators, forensic experts, prosecutors, and judges</li>
+                        <li><strong>Create Evidence:</strong> Record digital evidence with cryptographic hashing</li>
+                        <li><strong>Transfer Custody:</strong> Move evidence through the investigation workflow</li>
+                        <li><strong>Verify Integrity:</strong> Check blockchain to ensure evidence hasn't been tampered with</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Key Features</h2>
+                </div>
+                <div class="grid grid-3">
+                    <div style="padding: 20px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #2563eb;">
+                        <h3 style="color: #1e40af; margin-bottom: 10px;">Immutable Records</h3>
+                        <p style="color: #475569;">All evidence transactions are permanently recorded on blockchain</p>
+                    </div>
+                    <div style="padding: 20px; background: #f0fdf4; border-radius: 8px; border-left: 4px solid #10b981;">
+                        <h3 style="color: #059669; margin-bottom: 10px;">Complete Traceability</h3>
+                        <p style="color: #475569;">Track full chain of custody from collection to court</p>
+                    </div>
+                    <div style="padding: 20px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                        <h3 style="color: #d97706; margin-bottom: 10px;">Tamper Detection</h3>
+                        <p style="color: #475569;">Automatic detection of any unauthorized modifications</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Participants Tab -->
+        <div id="participants" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Register New Participant</h2>
+                </div>
+                <form onsubmit="registerParticipant(event)">
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label for="participant_id">Participant ID *</label>
+                            <input type="text" id="participant_id" name="participant_id" class="form-control" 
+                                   placeholder="e.g., INV-001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="name">Full Name *</label>
+                            <input type="text" id="name" name="name" class="form-control" 
+                                   placeholder="e.g., Detective John Smith" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="role">Role *</label>
+                            <select id="role" name="role" class="form-control" required>
+                                <option value="">Select role...</option>
+                                <option value="investigator">Investigator</option>
+                                <option value="forensic_expert">Forensic Expert</option>
+                                <option value="prosecutor">Prosecutor</option>
+                                <option value="judge">Judge</option>
+                                <option value="admin">Administrator</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="organization">Organization *</label>
+                            <input type="text" id="organization" name="organization" class="form-control" 
+                                   placeholder="e.g., Metro Police Department" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Register Participant</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Registered Participants</h2>
+                </div>
+                <div id="participants-list" class="grid grid-3">
+                    <p style="color: #6b7280;">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evidence Tab -->
+        <div id="evidence" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Create New Evidence</h2>
+                </div>
+                <form onsubmit="createEvidence(event)">
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label for="description">Description *</label>
+                            <textarea id="description" name="description" class="form-control" 
+                                      placeholder="Describe the evidence..." required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="case_id">Case ID *</label>
+                            <input type="text" id="case_id" name="case_id" class="form-control" 
+                                   placeholder="e.g., CASE-2026-001" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="creator_id">Creator (Investigator/Expert) *</label>
+                            <select id="creator_id" name="creator_id" class="form-control" required>
+                                <option value="">Select creator...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="evidence_type">Evidence Type *</label>
+                            <select id="evidence_type" name="evidence_type" class="form-control" required>
+                                <option value="">Select type...</option>
+                                <option value="photograph">Photograph</option>
+                                <option value="video">Video</option>
+                                <option value="document">Document</option>
+                                <option value="log_file">Log File</option>
+                                <option value="disk_image">Disk Image</option>
+                                <option value="network_capture">Network Capture</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="evidence_file">Upload File (Optional)</label>
+                            <input type="file" id="evidence_file" name="evidence_file" class="form-control" 
+                                   onchange="handleFileUpload(this)">
+                            <small style="color: #6b7280; display: block; margin-top: 5px;">
+                                File will be hashed automatically. Or enter file location manually below.
+                            </small>
+                        </div>
+                        <div class="form-group">
+                            <label for="file_location">File Location</label>
+                            <input type="text" id="file_location" name="file_location" class="form-control" 
+                                   placeholder="Auto-generated or enter manually" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="file_hash_display">File Hash (SHA-256)</label>
+                            <input type="text" id="file_hash_display" class="form-control" 
+                                   placeholder="Auto-calculated from file" readonly>
+                            <small style="color: #6b7280; display: block; margin-top: 5px;">
+                                Hash is automatically calculated when you upload a file
+                            </small>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">Create Evidence</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Evidence Records</h2>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="evidence-search" placeholder="Search evidence..." 
+                               class="form-control" style="max-width: 300px;" 
+                               oninput="filterEvidence()">
+                        <select id="filter-case" class="form-control" style="max-width: 200px;" 
+                                onchange="filterEvidence()">
+                            <option value="">All Cases</option>
+                        </select>
+                        <select id="filter-status" class="form-control" style="max-width: 150px;" 
+                                onchange="filterEvidence()">
+                            <option value="all">All Status</option>
+                            <option value="active" selected>Active Only</option>
+                            <option value="inactive">Inactive Only</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="evidence-list" class="grid grid-2">
+                    <p style="color: #6b7280;">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transfer Tab -->
+        <div id="transfer" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Transfer Evidence Custody</h2>
+                </div>
+                <form onsubmit="transferEvidence(event)">
+                    <div class="form-group">
+                        <label for="transfer_evidence_id">Evidence ID *</label>
+                        <input type="text" id="transfer_evidence_id" name="transfer_evidence_id" class="form-control" 
+                               placeholder="Enter evidence ID to transfer" required>
+                    </div>
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label for="from_owner">Current Owner *</label>
+                            <select id="from_owner" name="from_owner" class="form-control" required>
+                                <option value="">Select current owner...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="to_owner">Transfer To *</label>
+                            <select id="to_owner" name="to_owner" class="form-control" required>
+                                <option value="">Select recipient...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reason">Transfer Reason *</label>
+                        <textarea id="reason" name="reason" class="form-control" 
+                                  placeholder="Explain the reason for this transfer..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Transfer Evidence</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Transfer Workflow Example</h2>
+                </div>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <h4>1. Investigation</h4>
+                        <p>Investigator collects evidence at crime scene</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4>2. Forensic Analysis</h4>
+                        <p>Transfer to forensic expert for technical analysis</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4>3. Prosecution</h4>
+                        <p>Transfer to prosecutor for case preparation</p>
+                    </div>
+                    <div class="timeline-item">
+                        <h4>4. Court Proceedings</h4>
+                        <p>Submit evidence to judge for trial</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Evidence Tab -->
+        <div id="delete" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Delete Evidence (Deactivate)</h2>
+                </div>
+                <div style="padding: 20px; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b; margin-bottom: 20px;">
+                    <h3 style="color: #d97706; margin-bottom: 10px;">Important Notice</h3>
+                    <p style="color: #78350f; line-height: 1.6;">
+                        This is a <strong>soft delete</strong> operation. The evidence will be marked as inactive but 
+                        will remain on the blockchain for audit purposes. All historical records will be preserved.
+                        Only administrators and current owners can deactivate evidence.
+                    </p>
+                </div>
+                <form onsubmit="deleteEvidence(event)">
+                    <div class="form-group">
+                        <label for="delete_evidence_id">Evidence ID *</label>
+                        <input type="text" id="delete_evidence_id" name="delete_evidence_id" class="form-control" 
+                               placeholder="Enter evidence ID to deactivate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="delete_requester_id">Your Participant ID (Requester) *</label>
+                        <select id="delete_requester_id" name="delete_requester_id" class="form-control" required>
+                            <option value="">Select your ID...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="delete_reason">Reason for Deactivation *</label>
+                        <textarea id="delete_reason" name="delete_reason" class="form-control" 
+                                  placeholder="Explain why this evidence needs to be deactivated..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Deactivate Evidence</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>About Evidence Deletion</h2>
+                </div>
+                <div style="color: #4b5563; line-height: 1.8;">
+                    <p style="margin-bottom: 15px;">
+                        <strong>Soft Delete:</strong> Evidence is never permanently removed from the blockchain. 
+                        When deactivated, it is marked as inactive and cannot be transferred, but all historical 
+                        records remain intact for audit trails and legal compliance.
+                    </p>
+                    <p style="margin-bottom: 15px;">
+                        <strong>Who Can Delete:</strong> Only the current owner or system administrators have 
+                        permission to deactivate evidence. This ensures proper authority and prevents unauthorized 
+                        evidence removal.
+                    </p>
+                    <p style="margin-bottom: 15px;">
+                        <strong>Blockchain Record:</strong> The deletion operation itself is recorded on the blockchain 
+                        with a timestamp, requester ID, and reason, creating an immutable audit trail.
+                    </p>
+                    <p>
+                        <strong>Use Cases:</strong> Evidence contamination, procedural errors, duplicate entries, 
+                        case dismissal, or evidence deemed inadmissible by court.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Blockchain Tab -->
+        <div id="blockchain" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Blockchain Visualization</h2>
+                    <button id="verify-blockchain-btn" class="btn btn-success" onclick="verifyBlockchain()">
+                        Verify Integrity
+                    </button>
+                </div>
+                <div id="blockchain-viz">
+                    <p style="color: #6b7280;">Loading blockchain...</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>About Blockchain Security</h2>
+                </div>
+                <div style="color: #4b5563; line-height: 1.8;">
+                    <p style="margin-bottom: 15px;">
+                        <strong>How it works:</strong> Each block contains a cryptographic hash of the previous block, 
+                        creating an immutable chain. Any attempt to modify past records will break the chain and be 
+                        immediately detected.
+                    </p>
+                    <p style="margin-bottom: 15px;">
+                        <strong>Proof of Work:</strong> Each block must be "mined" by finding a hash that meets 
+                        specific difficulty requirements, making tampering computationally expensive.
+                    </p>
+                    <p>
+                        <strong>SHA-256 Hashing:</strong> All evidence files and blocks use SHA-256 cryptographic 
+                        hashing to ensure integrity and detect any unauthorized modifications.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Evidence Details Modal -->
+    <div id="evidence-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Evidence Details</h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div id="modal-evidence-content">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
