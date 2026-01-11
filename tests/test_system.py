@@ -189,27 +189,27 @@ def main():
     # ============== TEST 6: DELETE EVIDENCE ==============
     print_header("6. EVIDENCE DELETION")
     
-    # Test deletion by non-owner
+    # Test deletion by non-creator (current owner but not creator)
     success, msg = contract.delete_evidence(
-        evidence_id=evidence_ids[1],
-        requester_id="INV001",  # Not owner
+        evidence_id=evidence_ids[0],
+        requester_id="JUD001",  # Current owner but not creator
         reason="Test deletion"
     )
-    print_result(not success, f"Rejected unauthorized deletion: {msg}")
+    print_result(not success, f"Rejected deletion by owner who is not creator: {msg}")
     
-    # Delete by owner
+    # Delete by creator (FOR001 created evidence 1)
     success, msg = contract.delete_evidence(
         evidence_id=evidence_ids[1],
-        requester_id="FOR001",  # Owner
+        requester_id="FOR001",  # Creator
         reason="Evidence no longer relevant to case"
     )
     print_result(success, msg)
     
-    # Delete by admin
+    # Delete by admin (soft delete only)
     success, msg = contract.delete_evidence(
         evidence_id=evidence_ids[2],
         requester_id="ADM001",  # Admin
-        reason="Administrative decision"
+        reason="Administrative decision (soft delete)"
     )
     print_result(success, msg)
     

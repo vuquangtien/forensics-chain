@@ -209,6 +209,11 @@ class ForensicContract:
         Mark evidence as inactive (soft delete).
         Note: History on blockchain is still preserved.
         
+        Permission rules (according to paper):
+        - Only CREATOR can delete evidence (not current owner if different)
+        - Admin can only SOFT DELETE (mark as inactive)
+        - Current owner who is not creator CANNOT delete
+        
         Args:
             evidence_id: Evidence ID
             requester_id: ID of person requesting deletion
@@ -227,19 +232,29 @@ class ForensicContract:
         if not evidence.is_active:
             return False, "Evidence has already been deactivated"
         
-        # Check deletion permission (only owner or admin)
+        # Check deletion permission
+        # According to paper: Only creator can delete evidence
+        # Admin can only soft delete (mark as inactive)
         requester = self.participant_registry.get(requester_id)
         if not requester:
             return False, f"User '{requester_id}' not found"
         
-        is_owner = evidence.current_owner_id == requester_id
+        is_creator = evidence.creator_id == requester_id
         is_admin = requester.role == ParticipantRole.ADMIN
         
-        if not (is_owner or is_admin):
-            return False, "No permission to delete this evidence"
+        # Only creator or admin can delete
+        if not (is_creator or is_admin):
+            return False, "Permission denied. Only evidence creator or admin can delete evidence"
         
-        # Mark as inactive (soft delete)
-        evidence.is_active = False
+        # If not creator (i.e., admin), only allow soft delete
+        if not is_creator and is_admin:
+            # Admin can only soft delete
+            evidence.is_active = False
+        elif is_creator:
+            # Creator can fully delete (soft delete - history preserved on blockchain)
+            evidence.is_active = False
+        else:
+            return False, "Permission denied"
         
         # Record transaction on blockchain
         tx_id = self.blockchain.add_transaction({
